@@ -1,16 +1,47 @@
 #include "main.h"
 #include "adns9800.h"
 #include "spi.h"
+#include "io.h"
 
+
+volatile unsigned char MOTION = 0;
+
+ISR (ADNS9800_MOTION_vect)
+{
+    LED_PORT.OUTTGL = LED_DIAG;
+    // adns9800_write_reg(A_MOTION, 0x00);
+
+    MOTION = 1;
+}
 
 void adns9800_init(void)
 {
+    unsigned char reg;
+    
+    
     ADNS9800_PORT.DIRSET = PIN7_bm | PIN5_bm | PIN4_bm;
     ADNS9800_PORT.DIRCLR = PIN6_bm;
     ADNS9800_PORT.DIRCLR = ANDS9800_MOTION_PIN;
+    ADNS9800_PORT.ADNS9800_MOTION_PINCTRL = PORT_ISC_FALLING_gc;
+    ADNS9800_PORT.INT0MASK |= ANDS9800_MOTION_PIN;
+    ADNS9800_PORT.INTCTRL |= PORT_INT0LVL_LO_gc;
 
     spi_init(&ADNS9800_SPI);
+    
     ADNS9800_CS_H;
+    _delay_ms(100);
+    
+    adns9800_write_reg(A_POWER_UP_RESET, 0x5a);
+    _delay_ms(100);
+    adns9800_read_reg(A_MOTION);
+    adns9800_read_reg(A_DX_L);
+    adns9800_read_reg(A_DX_H);
+    adns9800_read_reg(A_DY_L);
+    adns9800_read_reg(A_DY_H);
+
+    reg = adns9800_read_reg(A_LASER_CTRL0);
+    reg &= 0xf0;
+    adns9800_write_reg(A_LASER_CTRL0, reg);
 }
 
 
@@ -40,26 +71,29 @@ void adns9800_write_reg(unsigned char addr, unsigned char val)
 }
 
 
-void adns9800_motion(unsigned char *motion,
-                     signed char *dx, signed char *dy,
-                     unsigned char *squal,
-                     unsigned char *shutter_upper, unsigned char *shutter_lower,
-                     unsigned char *max_pixel)
+void adns9800_motion(unsigned char *motion, unsigned char *observation,
+                     signed short *dx, signed short *dy,
+                     unsigned char *squal)
 {
+    unsigned char reg;
+    
     ADNS9800_CS_L; asm("nop\n"); asm("nop\n");
 
     spi_writeread(&ADNS9800_SPI, A_MOTION_BURST); _delay_us(25);
     
     *motion = spi_writeread(&ADNS9800_SPI, 0x00);
-    *dx = spi_writeread(&ADNS9800_SPI, 0x00);
-    *dy = spi_writeread(&ADNS9800_SPI, 0x00);
-    *squal = spi_writeread(&ADNS9800_SPI, 0x00);
-    *shutter_upper = spi_writeread(&ADNS9800_SPI, 0x00);
-    *shutter_lower = spi_writeread(&ADNS9800_SPI, 0x00);
-    *max_pixel = spi_writeread(&ADNS9800_SPI, 0x00);
+    *observation = spi_writeread(&ADNS9800_SPI, 0x00);
     
+    reg = spi_writeread(&ADNS9800_SPI, 0x00); /* dx_l */
+    *dx = (spi_writeread(&ADNS9800_SPI, 0x00) << 8) | reg;
+
+    reg = spi_writeread(&ADNS9800_SPI, 0x00);
+    *dy = (spi_writeread(&ADNS9800_SPI, 0x00) << 8) | reg;
+    
+    *squal = spi_writeread(&ADNS9800_SPI, 0x00);
+        
     ADNS9800_CS_H;
-    _delay_us(4);
+    _delay_us(1);
 }
 
 

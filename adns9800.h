@@ -5,6 +5,8 @@
 #define ADNS9800_PORT PORTC
     #define ADNS9800_NCS_PIN PIN4_bm
     #define ANDS9800_MOTION_PIN PIN3_bm
+    #define ADNS9800_MOTION_PINCTRL PIN3CTRL
+    #define ADNS9800_MOTION_vect    PORTC_INT0_vect
 
 
 #define ADNS9800_CS_H   (ADNS9800_PORT.OUTSET = ADNS9800_NCS_PIN)
@@ -62,17 +64,17 @@
 
 
 
+extern volatile unsigned char MOTION;
+
 
 void adns9800_init(void);
 unsigned char adns9800_read_reg(unsigned char addr);
 void adns9800_write_reg(unsigned char addr, unsigned char val);
 
 
-void adns9800_motion(unsigned char *motion,
-                     signed char *dx, signed char *dy,
-                     unsigned char *squal,
-                     unsigned char *shutter_upper, unsigned char *shutter_lower,
-                     unsigned char *max_pixel);
+void adns9800_motion(unsigned char *motion, unsigned char *observation,
+                     signed short *dx, signed short *dy,
+                     unsigned char *squal);
 
 void adns9800_capture(void);
 

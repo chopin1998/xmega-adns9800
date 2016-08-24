@@ -44,7 +44,8 @@ void cmd_process(unsigned char *cmd_buf)
         }
         else if ( !strcmp_P(para_head->para, PSTR("spi_r")) )
         {
-            printf("-> 0x%02x\n", adns9800_read_reg(0x00));
+            printf("-> 0x%02x\n", adns9800_read_reg(0x02));
+            printf("-> 0x%02x\n", adns9800_read_reg(0x07));
         }
         else if ( !strcmp_P(para_head->para, PSTR("spi_w")) )
         {
@@ -53,11 +54,11 @@ void cmd_process(unsigned char *cmd_buf)
         }
         else if ( !strcmp_P(para_head->para, PSTR("motion")) )
         {
-            unsigned char m, s, u, l, p;
-            signed char x, y;
+            unsigned char m, o, s;
+            signed short x, y;
 
-            adns9800_motion(&m, &x, &y, &s, &u, &l, &p);
-            printf("0x%02x, dx: %d, dy: %d, s: %d, u:0x%02x, l:0x%02x, p:0x%02x\n", m, x, y, s, u, l, p);
+            adns9800_motion(&m, &o, &x, &y, &s);
+            printf("0x%02x, 0x%02x, 0x%02x | dx: %d, dy: %d\n", m, o, s, x, y);
         }
         else if ( !strcmp_P(para_head->para, PSTR("capture")) )
         {

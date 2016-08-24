@@ -98,6 +98,22 @@ int main(void)
             CDC_Device_USBTask(&CDC_IF);
             USB_USBTask(); // should be called in 30ms/loop
         }
+
+        if (MOTION)
+        {
+            MOTION = 0;
+            adns9800_write_reg(A_MOTION, 0x00);
+            /*
+            printf("0x%02x, 0x%02x | 0x%02x, 0x%02x\n",
+                   adns9800_read_reg(A_DX_H), adns9800_read_reg(A_DX_L),
+                   adns9800_read_reg(A_DY_H), adns9800_read_reg(A_DY_L));
+            */
+            unsigned char m, o, s;  
+            signed short x, y;
+
+            // adns9800_motion(&m, &o, &x, &y, &s);
+            // printf("0x%02x, 0x%02x, 0x%02x | dx: %d, dy: %d\n", m, o, s, x, y);
+        }
     }
 }
 
